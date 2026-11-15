@@ -64,6 +64,8 @@ jobs:
           if-no-files-found: error
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Upload Pages deployment bundle
         uses: actions/upload-pages-artifact@v3
         with:
