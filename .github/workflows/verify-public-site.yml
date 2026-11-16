@@ -27,7 +27,7 @@ jobs:
              -H "Accept: application/vnd.github+json" \
              "https://api.github.com/repos/$GITHUB_REPOSITORY/pages" |
              python3 -c 'import sys,json; p=json.load(sys.stdin); print({k:p.get(k) for k in ("html_url", "cname", "source", "build_type", "status")})'
-          for path in "" "index.html" "manifest.webmanifest" "sw.js" "assets/index-GCSwC0Rd.js"; do
+          for path in "" "index.html" "manifest.webmanifest" "sw.js"; do
             url="${base}${path}"
             code="$(curl -sSL --max-time 25 -H "Cache-Control: no-cache" -o /tmp/page -w '%{http_code}' "$url?verify=$GITHUB_RUN_ID")"
             echo "HTTP $code $url"
@@ -39,4 +39,19 @@ jobs:
               grep -q 'Rollback Ally PDF' /tmp/page || { echo "::error::Unexpected HTML from $url"; exit 1; }
             fi
           done
+          # Check the actual public HTML and current fingerprinted JavaScript.
+          curl -fsSL -H "Cache-Control: no-cache" "${base}?signature=$GITHUB_RUN_ID" -o /tmp/current-index.html
+          grep -q 'savedSignatureSection' /tmp/current-index.html || {
+            echo "::error::Public HTML does not contain the saved signature interface"
+            exit 1
+          }
+          bundle="$(grep -oE 'src="\\./assets/index-[^"]+\\.js"' /tmp/current-index.html | head -n 1 | cut -d '"' -f2)"
+          test -n "$bundle"
+          bundle_url="${base}${bundle#./}"
+          curl -fsSL "$bundle_url?verify=$GITHUB_RUN_ID" -o /tmp/current-bundle.js
+          grep -q 'rollback-ally-pdf.saved-signature.v1' /tmp/current-bundle.js || {
+            echo "::error::The live JavaScript bundle lacks local signature storage"
+            exit 1
+          }
+          echo "Verified saved-signature controls and bundle at $bundle_url"
           echo "All public Rollback Ally PDF resources are accessible."
