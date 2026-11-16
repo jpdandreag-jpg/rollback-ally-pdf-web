@@ -73,9 +73,7 @@ jobs:
           logo_code="$(curl -sSL --max-time 25 -H "Cache-Control: no-cache" -o /tmp/rollback-logo.png -w '%{http_code}' "$logo_url?verify=$GITHUB_RUN_ID")"
           echo "HTTP $logo_code $logo_url"
           test "$logo_code" = "200" || { echo "::error::Public Rollback Ally logo missing"; exit 1; }
-          head -c 8 /tmp/rollback-logo.png | od -An -tx1 | tr -d ' \\n' | grep -q '^89504e470d0a1a0a
-          echo "All public Rollback Ally PDF resources are accessible."
-
+          python3 -c 'import struct; b=open("/tmp/rollback-logo.png","rb").read(); assert b[:8] == bytes.fromhex("89504e470d0a1a0a"); assert struct.unpack(">II",b[16:24]) == (704,121)'
           count="$(grep -o 'src="./rollback-ally-logo.png"' /tmp/current-index.html | wc -l)"
           test "$count" -eq 2 || { echo "::error::Logo should appear in both welcome and top bar"; exit 1; }
           grep -q 'welcome-logo-panel' /tmp/current-index.html
