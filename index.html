@@ -85,11 +85,21 @@
 
   <dialog id="signatureDialog">
     <div class="dialog-body">
-      <h2>Dibuja tu firma</h2>
-      <p class="muted">Firma con el dedo o un lápiz digital.</p>
+      <h2>Tu firma</h2>
+      <section id="savedSignatureSection" class="saved-signature-panel hidden" aria-label="Firma guardada">
+        <strong>Firma guardada en este dispositivo</strong>
+        <div class="saved-signature-preview"><img id="savedSignaturePreview" alt="Vista previa de tu firma guardada"></div>
+        <div class="saved-signature-actions">
+          <button id="useSavedSignature" class="button primary" type="button">Usar firma guardada</button>
+          <button id="deleteSavedSignature" class="button danger" type="button">Eliminar firma</button>
+        </div>
+      </section>
+      <p class="muted" id="drawSignatureIntro">Dibuja una firma nueva con el dedo o un lápiz digital.</p>
       <div class="signature-area"><canvas id="signaturePad" width="800" height="260"></canvas></div>
-      <div class="dialog-buttons between"><button id="clearSignature" class="button subtle" type="button">Borrar</button><div><button type="button" data-close="signatureDialog" class="button subtle">Cancelar</button><button id="useSignature" type="button" class="button primary">Usar firma</button></div></div>
-      <p class="muted">Firma visual. No constituye una firma digital certificada.</p>
+      <label class="remember-signature"><input id="rememberSignature" type="checkbox"> <span>Guardar esta firma en este dispositivo para próximos PDFs</span></label>
+      <p class="muted signature-privacy">Si compartes el teléfono con otras personas, no guardes tu firma. Puedes eliminarla cuando quieras.</p>
+      <div class="dialog-buttons between"><button id="clearSignature" class="button subtle" type="button">Borrar dibujo</button><div><button type="button" data-close="signatureDialog" class="button subtle">Cancelar</button><button id="useSignature" type="button" class="button primary">Usar firma nueva</button></div></div>
+      <p class="muted">Es una firma manuscrita visible, no una firma digital certificada.</p>
     </div>
   </dialog>
 

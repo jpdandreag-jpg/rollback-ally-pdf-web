@@ -6,6 +6,7 @@ import {
   PDFTextField, PDFCheckBox, PDFDropdown, PDFRadioGroup, PDFOptionList,
 } from 'pdf-lib';
 import { exportFileName, safePosition } from './utils.js';
+import { loadSavedSignature, saveSignature, deleteSavedSignature } from './signature-storage.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 const $ = (selector) => document.querySelector(selector);
@@ -25,6 +26,9 @@ const ui = {
   fontSize: $('#fontSize'), fontDisplay: $('#fontDisplay'),
   signDialog: $('#signatureDialog'), signCanvas: $('#signaturePad'),
   clearSign: $('#clearSignature'), useSign: $('#useSignature'),
+  rememberSign: $('#rememberSignature'), savedSignSection: $('#savedSignatureSection'),
+  savedSignPreview: $('#savedSignaturePreview'), useSavedSign: $('#useSavedSignature'),
+  deleteSavedSign: $('#deleteSavedSignature'),
   fieldsDialog: $('#fieldsDialog'), fieldsBody: $('#fieldsBody'),
   fieldsCount: $('#fieldCount'), finishFields: $('#finishFields'),
 };
@@ -285,6 +289,8 @@ function handleTool(tool) {
   }
   if (tool === 'signature') {
     prepareSignature();
+    ui.rememberSign.checked = false;
+    refreshSavedSignature();
     ui.signDialog.showModal();
     return;
   }
@@ -319,6 +325,41 @@ ui.textForm.addEventListener('submit', ev => {
 });
 ui.fontSize.addEventListener('input', () => { ui.fontDisplay.textContent = ui.fontSize.value + ' pt'; });
 document.querySelectorAll('[data-close]').forEach(btn => btn.addEventListener('click', () => $('#' + btn.dataset.close).close()));
+function getSignatureStorage() {
+  try { return window.localStorage; } catch (_) { return null; }
+}
+function refreshSavedSignature() {
+  const saved = loadSavedSignature(getSignatureStorage());
+  ui.savedSignSection.classList.toggle('hidden', !saved);
+  if (saved) {
+    ui.savedSignPreview.src = saved.data;
+  } else {
+    ui.savedSignPreview.removeAttribute('src');
+  }
+  return saved;
+}
+function activateSignature(data, ratio) {
+  state.signatureData = data;
+  state.signatureRatio = ratio;
+  ui.signDialog.close();
+  setTool('signature');
+  toast('Toca el PDF donde quieras colocar tu firma.');
+}
+ui.useSavedSign.addEventListener('click', () => {
+  const saved = refreshSavedSignature();
+  if (!saved) return toast('No hay una firma guardada en este dispositivo.');
+  activateSignature(saved.data, saved.ratio);
+});
+ui.deleteSavedSign.addEventListener('click', () => {
+  if (!window.confirm('¿Eliminar la firma guardada de este dispositivo?')) return;
+  try {
+    deleteSavedSignature(getSignatureStorage());
+    refreshSavedSignature();
+    toast('La firma guardada se eliminó de este dispositivo.');
+  } catch (_) {
+    toast('No se pudo eliminar la firma del almacenamiento del navegador.');
+  }
+});
 const pad = ui.signCanvas;
 const padCtx = pad.getContext('2d');
 let drawing = false, hasInk = false;
@@ -374,11 +415,17 @@ ui.useSign.addEventListener('click', () => {
   trimmed.getContext('2d').drawImage(pad,
     minX, minY, width - 2 * padding, height - 2 * padding,
     padding, padding, width - 2 * padding, height - 2 * padding);
-  state.signatureData = trimmed.toDataURL('image/png');
-  state.signatureRatio = width / height;
-  ui.signDialog.close();
-  setTool('signature');
-  toast('Toca el documento donde quieras firmar.');
+  const data = trimmed.toDataURL('image/png');
+  const ratio = width / height;
+  if (ui.rememberSign.checked) {
+    try {
+      saveSignature(getSignatureStorage(), { data, ratio });
+      toast('Tu firma quedó guardada en este dispositivo.');
+    } catch (_) {
+      toast('La firma se puede usar, pero el navegador no permitió guardarla.');
+    }
+  }
+  activateSignature(data, ratio);
 });
 function showFields() {
   if (!state.fields.length) return toast('Este PDF no tiene campos editables. Usa Texto para rellenarlo.');

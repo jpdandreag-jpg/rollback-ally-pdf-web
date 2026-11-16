@@ -1,16 +1,6 @@
-name: Publish Rollback Ally PDF Web
+name: Legacy Pages deployment (manual only)
+
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'src/**'
-      - 'public/**'
-      - 'scripts/**'
-      - 'tests/**'
-      - 'package.json'
-      - 'vite.config.js'
-      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:

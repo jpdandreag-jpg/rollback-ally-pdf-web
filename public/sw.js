@@ -1,5 +1,5 @@
 // Precaching is inserted by scripts/postbuild.mjs after the Vite build.
-const CACHE_NAME = 'rollback-ally-pdf-v020';
+const CACHE_NAME = 'rollback-ally-pdf-v021-signatures';
 const PRECACHE = __PRECACHE__;
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME)

@@ -26,8 +26,21 @@ npm run build
 npm run dev
 ```
 
-La publicación se automatiza con `.github/workflows/deploy-pages.yml`.
-En **Settings → Pages** debe elegirse la fuente **GitHub Actions**.
+La publicación se automatiza con `.github/workflows/publish-gh-pages-branch.yml`:
+cada cambio en `src/` o `index.html` compila la app, pasa las pruebas y
+actualiza la rama `gh-pages`. En **Settings → Pages**, configurar
+**Deploy from a branch → gh-pages → /(root)**.
+
+## Firma manuscrita guardada
+- Abre un PDF y toca **Firmar**.
+- Dibuja la firma y marca **Guardar esta firma en este dispositivo**.
+- Toca **Usar firma nueva** y luego la página para colocarla.
+- En documentos posteriores, pulsa **Firmar → Usar firma guardada**.
+- Para retirar la copia local, pulsa **Firmar → Eliminar firma**.
+
+La firma guardada es una imagen local (no un certificado digital), accesible
+a quien utilice el mismo navegador/perfil. En equipos compartidos, **no**
+activar el guardado. Borrar los datos de Safari/Chrome puede eliminarla.
 
 ## Limitaciones
 

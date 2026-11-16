@@ -1,9 +1,16 @@
-name: Prepare Legacy GitHub Pages Branch
+name: Publish Rollback Ally PDF Web to gh-pages
 
 on:
   push:
     branches: [main]
     paths:
+      - 'src/**'
+      - 'index.html'
+      - 'public/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'vite.config.js'
       - '.github/workflows/publish-gh-pages-branch.yml'
   workflow_dispatch:
 
