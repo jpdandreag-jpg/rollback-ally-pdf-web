@@ -6,6 +6,7 @@ import {
   PDFTextField, PDFCheckBox, PDFDropdown, PDFRadioGroup, PDFOptionList,
 } from 'pdf-lib';
 import { exportFileName, safePosition } from './utils.js';
+import { captureSigningTime, drawTimedSignature } from './signing-timestamp.js';
 import { loadSavedSignature, saveSignature, deleteSavedSignature } from './signature-storage.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -209,6 +210,11 @@ function renderStamps() {
       img.src = stamp.data;
       img.alt = 'Firma manuscrita';
       box.append(img);
+      const caption = document.createElement('span');
+      caption.className = 'signature-time-caption';
+      caption.style.fontSize = (7.6 * state.scale) + 'px';
+      caption.textContent = stamp.signedAtLabel;
+      box.append(caption);
     } else {
       box.style.fontSize = (stamp.size * state.scale) + 'px';
       box.textContent = stamp.type === 'check' ? '✓' : stamp.text;
@@ -233,8 +239,17 @@ function startDrag(event) {
   el.setPointerCapture(event.pointerId);
   el.onpointermove = ev => {
     if (!el.hasPointerCapture(ev.pointerId)) return;
-    stamp.x = safePosition(sx + (ev.clientX - x0) / rect.width);
-    stamp.y = safePosition(sy + (ev.clientY - y0) / rect.height);
+    const desiredX = safePosition(sx + (ev.clientX - x0) / rect.width);
+    const desiredY = safePosition(sy + (ev.clientY - y0) / rect.height);
+    if (stamp.type === 'signature') {
+      const signatureHeight = stamp.width * rect.width / stamp.aspect;
+      const captionHeight = 14 * state.scale;
+      stamp.x = Math.min(desiredX, Math.max(0, 1 - stamp.width));
+      stamp.y = Math.min(desiredY, Math.max(0, 1 - (signatureHeight + captionHeight) / rect.height));
+    } else {
+      stamp.x = desiredX;
+      stamp.y = desiredY;
+    }
     el.style.left = (stamp.x * 100) + '%';
     el.style.top = (stamp.y * 100) + '%';
   };
@@ -269,6 +284,11 @@ ui.canvas.addEventListener('click', event => {
     stamp.data = state.signatureData;
     stamp.aspect = state.signatureRatio;
     stamp.width = .27;
+    Object.assign(stamp, captureSigningTime());
+    const signatureHeight = stamp.width * ui.frame.clientWidth / stamp.aspect;
+    const captionHeight = 14 * state.scale;
+    stamp.x = Math.min(stamp.x, 1 - stamp.width);
+    stamp.y = Math.min(stamp.y, Math.max(0, 1 - (signatureHeight + captionHeight) / ui.frame.clientHeight));
   } else {
     stamp.size = type === 'check' ? 22 : state.fontSize;
     stamp.text = type === 'text' ? state.stampText :
@@ -279,7 +299,9 @@ ui.canvas.addEventListener('click', event => {
   state.selectedId = stamp.id;
   setTool('move');
   renderStamps();
-  toast('Elemento colocado. Puedes arrastrarlo para ajustar la posición.');
+  toast(type === 'signature'
+    ? 'Firma y fecha/hora colocadas. Puedes moverlas juntas.'
+    : 'Elemento colocado. Puedes arrastrarlo para ajustar la posición.');
 });
 function handleTool(tool) {
   if (!state.original || state.busy) return;
@@ -343,7 +365,7 @@ function activateSignature(data, ratio) {
   state.signatureRatio = ratio;
   ui.signDialog.close();
   setTool('signature');
-  toast('Toca el PDF donde quieras colocar tu firma.');
+  toast('Toca el PDF: se añadirá la fecha y hora del dispositivo al colocarla.');
 }
 ui.useSavedSign.addEventListener('click', () => {
   const saved = refreshSavedSignature();
@@ -498,9 +520,7 @@ async function buildEditedPdf() {
     const x = safePosition(stamp.x) * width, top = safePosition(stamp.y) * height;
     if (stamp.type === 'signature') {
       const image = await document.embedPng(stamp.data);
-      const w = Math.min(width * stamp.width, width - x);
-      const h = w / stamp.aspect;
-      page.drawImage(image, { x, y: Math.max(0, height - top - h), width: w, height: h });
+      drawTimedSignature(page, image, helvetica, stamp, rgb(.14, .2, .33));
     } else if (stamp.type === 'check') {
       const size = stamp.size;
       const bottom = height - top - size;
