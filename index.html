@@ -62,6 +62,15 @@
           <button id="zoomIn" type="button" class="round" title="Acercar">+</button>
         </div>
         <p id="instruction" class="instruction">Elige una herramienta. Para colocar texto o una firma, toca la página.</p>
+        <div class="signature-resize hidden" id="signatureResize" aria-label="Ajustar tamaño de firma">
+          <div class="signature-resize-title">✍ Firma seleccionada <span>· Tamaño</span></div>
+          <div class="signature-resize-controls">
+            <button id="signatureSmaller" type="button" class="round" aria-label="Reducir firma">−</button>
+            <input id="signatureSize" type="range" min="8" max="70" step="1" value="27" aria-label="Tamaño de la firma en porcentaje del ancho de página">
+            <button id="signatureLarger" type="button" class="round" aria-label="Ampliar firma">+</button>
+            <output id="signatureSizeValue" for="signatureSize">27%</output>
+          </div>
+        </div>
         <div class="page-scroll" id="pageScroll">
           <div id="pageFrame" class="page-frame" aria-label="Vista del documento PDF">
             <canvas id="pdfCanvas"></canvas>

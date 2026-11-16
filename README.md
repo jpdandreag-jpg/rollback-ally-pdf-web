@@ -45,3 +45,12 @@ activar el guardado. Borrar los datos de Safari/Chrome puede eliminarla.
 ## Limitaciones
 
 Versión preliminar. No incluye firma digital criptográfica, OCR o edición completa de texto existente, y algunos formularios complejos o PDFs protegidos pueden fallar. La firma manuscrita es una imagen insertada. Probar con documentos ficticios antes de usar archivos laborales confidenciales.
+
+## Ajustar tamaño de firma
+- Firma o usa una firma guardada y toca la página para colocarla.
+- Toca la firma ya colocada para seleccionarla.
+- Usa **Tamaño** (barra deslizante de 8% a 70% del ancho de página), o los botones **−** y **+**.
+- Arrastra la firma para moverla. El timestamp permanece junto a ella.
+- Guarda o comparte: se exporta la firma en su tamaño ajustado.
+
+El cambio afecta solo esa firma del documento, no la imagen guardada para otros PDFs.

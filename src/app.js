@@ -7,6 +7,7 @@ import {
 } from 'pdf-lib';
 import { exportFileName, safePosition } from './utils.js';
 import { captureSigningTime, drawTimedSignature } from './signing-timestamp.js';
+import { resizeSignatureStamp, MIN_SIGNATURE_SIZE, MAX_SIGNATURE_SIZE } from './signature-size.js';
 import { loadSavedSignature, saveSignature, deleteSavedSignature } from './signature-storage.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -23,6 +24,9 @@ const ui = {
   pageScroll: $('#pageScroll'), frame: $('#pageFrame'),
   canvas: $('#pdfCanvas'), stamps: $('#stampsLayer'), instruction: $('#instruction'),
   removeSelected: $('#removeSelected'), toast: $('#toast'),
+  resizePanel: $('#signatureResize'), signatureSize: $('#signatureSize'),
+  signatureSizeValue: $('#signatureSizeValue'), smaller: $('#signatureSmaller'),
+  larger: $('#signatureLarger'),
   textDialog: $('#textDialog'), textForm: $('#textForm'), text: $('#textInput'),
   fontSize: $('#fontSize'), fontDisplay: $('#fontDisplay'),
   signDialog: $('#signatureDialog'), signCanvas: $('#signaturePad'),
@@ -63,7 +67,7 @@ function setTool(tool) {
     button.classList.toggle('active', button.dataset.tool === tool);
   });
   const labels = {
-    move: 'Puedes desplazarte por el PDF. Selecciona un elemento para moverlo o eliminarlo.',
+    move: 'Toca una firma para seleccionarla, moverla o cambiar su tamaño.',
     text: 'Toca la página para colocar el texto. La posición puede ajustarse después.',
     date: 'Toca la página para colocar la fecha.',
     check: 'Toca la página donde quieras colocar una marca de verificación.',
@@ -78,7 +82,17 @@ function updateToolbar() {
   ui.prev.disabled = state.page <= 1 || state.busy;
   ui.next.disabled = state.page >= state.pageTotal || state.busy;
   ui.zoomIndicator.textContent = Math.round(state.zoom * 100) + '%';
-  ui.removeSelected.hidden = state.selectedId == null;
+  const selected = state.stamps.find(s => s.id === state.selectedId && s.page === state.page);
+  ui.removeSelected.hidden = !selected;
+  ui.resizePanel.classList.toggle('hidden', !selected || selected.type !== 'signature');
+  if (selected?.type === 'signature') {
+    const percent = Math.round(selected.width * 100);
+    ui.signatureSize.value = String(percent);
+    ui.signatureSizeValue.textContent = percent + '%';
+    ui.signatureSize.disabled = state.busy;
+    ui.smaller.disabled = state.busy || percent <= MIN_SIGNATURE_SIZE;
+    ui.larger.disabled = state.busy || percent >= MAX_SIGNATURE_SIZE;
+  }
   ui.fieldsCount.hidden = state.fields.length === 0;
   ui.fieldsCount.textContent = state.fields.length;
 }
@@ -242,10 +256,10 @@ function startDrag(event) {
     const desiredX = safePosition(sx + (ev.clientX - x0) / rect.width);
     const desiredY = safePosition(sy + (ev.clientY - y0) / rect.height);
     if (stamp.type === 'signature') {
-      const signatureHeight = stamp.width * rect.width / stamp.aspect;
-      const captionHeight = 14 * state.scale;
-      stamp.x = Math.min(desiredX, Math.max(0, 1 - stamp.width));
-      stamp.y = Math.min(desiredY, Math.max(0, 1 - (signatureHeight + captionHeight) / rect.height));
+      stamp.x = desiredX;
+      stamp.y = desiredY;
+      resizeSignatureStamp(stamp, stamp.width * 100,
+        rect.width, rect.height, state.scale);
     } else {
       stamp.x = desiredX;
       stamp.y = desiredY;
@@ -285,10 +299,8 @@ ui.canvas.addEventListener('click', event => {
     stamp.aspect = state.signatureRatio;
     stamp.width = .27;
     Object.assign(stamp, captureSigningTime());
-    const signatureHeight = stamp.width * ui.frame.clientWidth / stamp.aspect;
-    const captionHeight = 14 * state.scale;
-    stamp.x = Math.min(stamp.x, 1 - stamp.width);
-    stamp.y = Math.min(stamp.y, Math.max(0, 1 - (signatureHeight + captionHeight) / ui.frame.clientHeight));
+    resizeSignatureStamp(stamp, 27,
+      ui.frame.clientWidth, ui.frame.clientHeight, state.scale);
   } else {
     stamp.size = type === 'check' ? 22 : state.fontSize;
     stamp.text = type === 'text' ? state.stampText :
@@ -300,8 +312,27 @@ ui.canvas.addEventListener('click', event => {
   setTool('move');
   renderStamps();
   toast(type === 'signature'
-    ? 'Firma y fecha/hora colocadas. Puedes moverlas juntas.'
+    ? 'Firma colocada. Ajusta su tamaño con el control sobre el PDF.'
     : 'Elemento colocado. Puedes arrastrarlo para ajustar la posición.');
+});
+function changeSelectedSignatureSize(percent) {
+  if (state.busy) return;
+  const stamp = state.stamps.find(s => s.id === state.selectedId && s.page === state.page);
+  if (!stamp || stamp.type !== 'signature') return;
+  resizeSignatureStamp(stamp, percent, ui.frame.clientWidth, ui.frame.clientHeight, state.scale);
+  invalidateExport();
+  renderStamps();
+}
+ui.signatureSize.addEventListener('input', () => {
+  changeSelectedSignatureSize(Number(ui.signatureSize.value));
+});
+ui.smaller.addEventListener('click', () => {
+  const selected = state.stamps.find(s => s.id === state.selectedId);
+  if (selected) changeSelectedSignatureSize(Math.round(selected.width * 100) - 5);
+});
+ui.larger.addEventListener('click', () => {
+  const selected = state.stamps.find(s => s.id === state.selectedId);
+  if (selected) changeSelectedSignatureSize(Math.round(selected.width * 100) + 5);
 });
 function handleTool(tool) {
   if (!state.original || state.busy) return;
