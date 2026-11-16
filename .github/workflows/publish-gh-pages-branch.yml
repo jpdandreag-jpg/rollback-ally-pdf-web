@@ -1,0 +1,44 @@
+name: Prepare Legacy GitHub Pages Branch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-gh-pages-branch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-static-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout public app
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify app
+        run: |
+          npm test
+          npm run build
+          touch dist/.nojekyll
+          test -f dist/index.html
+          test -f dist/sw.js
+      - name: Publish built files to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false
+      - name: Confirm static branch published
+        run: |
+          git ls-remote --exit-code --heads origin gh-pages
+          echo 'Prepared gh-pages branch. Next select Deploy from a branch / gh-pages / (root) in Settings > Pages.'
