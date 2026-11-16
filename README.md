@@ -57,6 +57,6 @@ El cambio afecta solo esa firma del documento, no la imagen guardada para otros 
 
 ## Identidad visual
 
-El logo horizontal proporcionado por Rollback Ally se muestra en la bienvenida y en la cabecera de la aplicación (`public/rollback-ally-logo.png`). La imagen original tenía transparencia irregular, por lo que se corrigió la visibilidad y se recortó el margen vacío sin cambiar la composición ni los colores.
+El logo horizontal proporcionado por Rollback Ally se muestra en la bienvenida y en la cabecera de la aplicación (`public/rollback-ally-logo.png`). La imagen original incluye letras sobre fondo transparente. Se corrigió un error anterior que había sustituido los píxeles transparentes por bloques de color, recuperando las letras **rollback ally**. Se muestra sobre un fondo blanco en bienvenida y cabecera.
 
 **El icono instalable está pendiente de aprobación**: `public/icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` y `manifest.webmanifest` no se modifican en esta actualización.
