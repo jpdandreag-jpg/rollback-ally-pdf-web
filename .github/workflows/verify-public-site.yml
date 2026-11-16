@@ -69,5 +69,17 @@ jobs:
             echo "::error::Published JavaScript lacks signature size adjustment handler"
             exit 1
           }
+          logo_url="${base}rollback-ally-logo.png"
+          logo_code="$(curl -sSL --max-time 25 -H "Cache-Control: no-cache" -o /tmp/rollback-logo.png -w '%{http_code}' "$logo_url?verify=$GITHUB_RUN_ID")"
+          echo "HTTP $logo_code $logo_url"
+          test "$logo_code" = "200" || { echo "::error::Public Rollback Ally logo missing"; exit 1; }
+          head -c 8 /tmp/rollback-logo.png | od -An -tx1 | tr -d ' \\n' | grep -q '^89504e470d0a1a0a
+          echo "All public Rollback Ally PDF resources are accessible."
+
+          count="$(grep -o 'src="./rollback-ally-logo.png"' /tmp/current-index.html | wc -l)"
+          test "$count" -eq 2 || { echo "::error::Logo should appear in both welcome and top bar"; exit 1; }
+          grep -q 'welcome-logo-panel' /tmp/current-index.html
+          grep -q 'brand-logo-panel' /tmp/current-index.html
+          echo "Verified corporate logo in welcome screen and header; app icon remains separate."
           echo "Verified saved signatures, timestamps and signature resizing at $bundle_url"
           echo "All public Rollback Ally PDF resources are accessible."
