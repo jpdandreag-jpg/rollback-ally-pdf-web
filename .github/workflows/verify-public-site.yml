@@ -45,7 +45,7 @@ jobs:
             echo "::error::Public HTML does not contain the saved signature interface"
             exit 1
           }
-          bundle="$(grep -oE 'src="\\./assets/index-[^"]+\\.js"' /tmp/current-index.html | head -n 1 | cut -d '"' -f2)"
+          bundle="$(grep -o 'src="./assets/index-[^"]*\.js"' /tmp/current-index.html | head -n 1 | cut -d '"' -f2)"
           test -n "$bundle"
           bundle_url="${base}${bundle#./}"
           curl -fsSL "$bundle_url?verify=$GITHUB_RUN_ID" -o /tmp/current-bundle.js
