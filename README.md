@@ -54,3 +54,9 @@ Versión preliminar. No incluye firma digital criptográfica, OCR o edición com
 - Guarda o comparte: se exporta la firma en su tamaño ajustado.
 
 El cambio afecta solo esa firma del documento, no la imagen guardada para otros PDFs.
+
+## Identidad visual
+
+El logo horizontal proporcionado por Rollback Ally se muestra en la bienvenida y en la cabecera de la aplicación (`public/rollback-ally-logo.png`). La imagen original tenía transparencia irregular, por lo que se corrigió la visibilidad y se recortó el margen vacío sin cambiar la composición ni los colores.
+
+**El icono instalable está pendiente de aprobación**: `public/icon.svg`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` y `manifest.webmanifest` no se modifican en esta actualización.
