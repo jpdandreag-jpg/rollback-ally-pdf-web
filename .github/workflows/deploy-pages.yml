@@ -73,3 +73,28 @@ jobs:
       - name: Deploy to Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Inspect published GitHub Pages endpoint
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "GitHub Pages site details:"
+          curl -sS -H "Authorization: Bearer $GH_TOKEN" \
+               -H "Accept: application/vnd.github+json" \
+               "https://api.github.com/repos/$GITHUB_REPOSITORY/pages" \
+          | python3 -c 'import sys,json; d=json.load(sys.stdin); print({k:d.get(k) for k in ("status","html_url","source","build_type","message")})'
+          echo "Checking public URL:"
+          url="https://jpdandreag-jpg.github.io/rollback-ally-pdf-web/"
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            status=$(curl -sSL -H 'Cache-Control: no-cache' -o /tmp/pages.html -w '%{http_code}' "$url?check=$GITHUB_RUN_ID-$attempt" || echo 000)
+            echo "Attempt $attempt: HTTP $status from $url"
+            if [ "$status" = 200 ] && grep -q 'Rollback Ally PDF' /tmp/pages.html; then
+              echo "Pages is live and serves the app's index.html"
+              exit 0
+            fi
+            if [ "$attempt" != 10 ]; then sleep 10; fi
+          done
+          echo "::error::GitHub Pages returned an unexpected document or HTTP status"
+          head -c 400 /tmp/pages.html || true
+          exit 1
+
