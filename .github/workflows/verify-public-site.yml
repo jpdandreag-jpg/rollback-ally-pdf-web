@@ -53,5 +53,13 @@ jobs:
             echo "::error::The live JavaScript bundle lacks local signature storage"
             exit 1
           }
-          echo "Verified saved-signature controls and bundle at $bundle_url"
+          grep -q 'Firmado:' /tmp/current-bundle.js || {
+            echo "::error::The published editor does not include signature date/time labels"
+            exit 1
+          }
+          grep -q 'Cada firma incluirá' /tmp/current-index.html || {
+            echo "::error::The public interface lacks the date/time disclosure"
+            exit 1
+          }
+          echo "Verified saved signatures and per-signature timestamp display at $bundle_url"
           echo "All public Rollback Ally PDF resources are accessible."
