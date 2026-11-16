@@ -61,5 +61,13 @@ jobs:
             echo "::error::The public interface lacks the date/time disclosure"
             exit 1
           }
-          echo "Verified saved signatures and per-signature timestamp display at $bundle_url"
+          grep -q 'signatureResize' /tmp/current-index.html || {
+            echo "::error::Public app lacks signature size adjustment controls"
+            exit 1
+          }
+          grep -q 'signatureSize' /tmp/current-bundle.js || {
+            echo "::error::Published JavaScript lacks signature size adjustment handler"
+            exit 1
+          }
+          echo "Verified saved signatures, timestamps and signature resizing at $bundle_url"
           echo "All public Rollback Ally PDF resources are accessible."
