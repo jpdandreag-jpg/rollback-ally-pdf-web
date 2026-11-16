@@ -74,10 +74,18 @@ jobs:
           echo "HTTP $logo_code $logo_url"
           test "$logo_code" = "200" || { echo "::error::Public Rollback Ally logo missing"; exit 1; }
           python3 -c 'import struct; b=open("/tmp/rollback-logo.png","rb").read(); assert b[:8] == bytes.fromhex("89504e470d0a1a0a"); assert struct.unpack(">II",b[16:24]) == (704,121)'
-          count="$(grep -o 'src="./rollback-ally-logo.png"' /tmp/current-index.html | wc -l)"
+          test "$(git hash-object /tmp/rollback-logo.png)" = "d7a275b88fcf20793c3a1ec053d346b60efb9e38" || {
+            echo "::error::Public logo does not match verified transparent wordmark bytes"
+            exit 1
+          }
+          count="$(grep -o 'src="./rollback-ally-logo.png?v=025"' /tmp/current-index.html | wc -l)"
           test "$count" -eq 2 || { echo "::error::Logo should appear in both welcome and top bar"; exit 1; }
           grep -q 'welcome-logo-panel' /tmp/current-index.html
           grep -q 'brand-logo-panel' /tmp/current-index.html
+          if grep -q 'welcome-brand-name' /tmp/current-index.html; then
+            echo "::error::Duplicate brand label still appears under the wordmark"
+            exit 1
+          fi
           echo "Verified corporate logo in welcome screen and header; app icon remains separate."
           echo "Verified saved signatures, timestamps and signature resizing at $bundle_url"
           echo "All public Rollback Ally PDF resources are accessible."
