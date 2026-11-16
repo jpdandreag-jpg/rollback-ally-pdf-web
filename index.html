@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0d1b31"/>
+  <meta name="description" content="Rollback Ally PDF — abrir, completar, firmar y compartir PDF directamente en tu dispositivo."/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Rollback PDF"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self' blob:; worker-src 'self' blob:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'"/>
+  <title>Rollback Ally PDF</title>
+  <link rel="manifest" href="./manifest.webmanifest"/>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg"/>
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png"/>
+  <script type="module" crossorigin src="./assets/index-eUkRv97U.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-ButQu2Tv.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-logo-panel"><img class="brand-logo" src="./rollback-ally-logo.png?v=025" alt="Rollback Ally" width="704" height="121"></span>
+        <div class="brand-copy"><b>PDF</b><small>Editor de documentos</small></div>
+      </div>
+      <div class="top-buttons">
+        <button id="openButton" class="button white" type="button" aria-label="Abrir PDF">📂 <span>Abrir</span></button>
+        <button id="saveButton" class="button primary" type="button" disabled>↓ <span>Guardar</span></button>
+        <button id="shareButton" class="button white" type="button" disabled>↗ <span>Compartir</span></button>
+      </div>
+    </header>
+    <main>
+      <section class="document-top hidden" id="documentTop">
+        <div class="document-identity"><span class="pdf-badge">PDF</span><span id="currentName">Documento</span></div>
+        <span class="page-count" id="pageCount">1 / 1</span>
+      </section>
+      <section class="toolstrip hidden" id="toolstrip" aria-label="Herramientas PDF">
+        <button class="tool active" data-tool="move">☝️ <span>Ver</span></button>
+        <button class="tool" data-tool="text">T <span>Texto</span></button>
+        <button class="tool" data-tool="date">▦ <span>Fecha</span></button>
+        <button class="tool" data-tool="check">✓ <span>Marca</span></button>
+        <button class="tool" data-tool="signature">✍ <span>Firmar</span></button>
+        <button class="tool" data-tool="fields">☷ <span>Formulario</span><span class="field-badge" id="fieldCount" hidden>0</span></button>
+        <button class="tool" data-tool="undo">↶ <span>Deshacer</span></button>
+      </section>
+      <section id="emptyState" class="welcome">
+        <div class="welcome-brand" aria-label="Rollback Ally">
+          <div class="welcome-logo-panel">
+            <img src="./rollback-ally-logo.png?v=025" alt="Rollback Ally" width="704" height="121">
+          </div>
+        </div>
+        <p class="eyebrow">EDITOR DE DOCUMENTOS PDF</p>
+        <h1>Tu PDF, firmado y listo.</h1>
+        <p class="intro">Abre un PDF, rellena sus campos, añade texto o tu firma y guarda una copia. Sin Adobe, sin cuenta y sin subir el archivo.</p>
+        <button id="heroOpen" class="button primary large">📂 Abrir un documento PDF</button>
+        <p class="muted">El procesamiento se realiza en este dispositivo.</p>
+        <div class="features"><span>✓ Firma manuscrita</span><span>✓ Formularios</span><span>✓ iPhone y Android</span></div>
+      </section>
+      <section class="pdf-workspace hidden" id="workspace">
+        <div class="view-controls">
+          <button id="prevPage" type="button" class="round" title="Página anterior">‹</button>
+          <span>Página <strong id="currentPage">1</strong> de <strong id="totalPages">1</strong></span>
+          <button id="nextPage" type="button" class="round" title="Página siguiente">›</button>
+          <span class="control-spacer"></span>
+          <button id="zoomOut" type="button" class="round" title="Alejar">−</button>
+          <span id="zoomIndicator">100%</span>
+          <button id="zoomIn" type="button" class="round" title="Acercar">+</button>
+        </div>
+        <p id="instruction" class="instruction">Elige una herramienta. Para colocar texto o una firma, toca la página.</p>
+        <div class="signature-resize hidden" id="signatureResize" aria-label="Ajustar tamaño de firma">
+          <div class="signature-resize-title">✍ Firma seleccionada <span>· Tamaño</span></div>
+          <div class="signature-resize-controls">
+            <button id="signatureSmaller" type="button" class="round" aria-label="Reducir firma">−</button>
+            <input id="signatureSize" type="range" min="8" max="70" step="1" value="27" aria-label="Tamaño de la firma en porcentaje del ancho de página">
+            <button id="signatureLarger" type="button" class="round" aria-label="Ampliar firma">+</button>
+            <output id="signatureSizeValue" for="signatureSize">27%</output>
+          </div>
+        </div>
+        <div class="page-scroll" id="pageScroll">
+          <div id="pageFrame" class="page-frame" aria-label="Vista del documento PDF">
+            <canvas id="pdfCanvas"></canvas>
+            <div id="stampsLayer" class="stamps-layer"></div>
+          </div>
+        </div>
+        <div class="viewer-footer"><span>🔒 Los documentos permanecen en tu dispositivo</span><button type="button" id="removeSelected" class="delete" hidden>Eliminar elemento</button></div>
+      </section>
+    </main>
+  </div>
+  <input id="fileInput" type="file" accept=".pdf,application/pdf" hidden/>
+
+  <dialog id="textDialog">
+    <form method="dialog" class="dialog-body" id="textForm">
+      <h2>Añadir texto</h2>
+      <label>Texto que aparecerá en el documento<textarea id="textInput" rows="3" maxlength="600" placeholder="Escribe aquí"></textarea></label>
+      <label>Tamaño del texto <span id="fontDisplay">14 pt</span><input id="fontSize" type="range" min="9" max="30" value="14"></label>
+      <div class="dialog-buttons"><button type="button" data-close="textDialog" class="button subtle">Cancelar</button><button type="submit" class="button primary">Colocar en PDF</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="signatureDialog">
+    <div class="dialog-body">
+      <h2>Tu firma</h2>
+      <section id="savedSignatureSection" class="saved-signature-panel hidden" aria-label="Firma guardada">
+        <strong>Firma guardada en este dispositivo</strong>
+        <div class="saved-signature-preview"><img id="savedSignaturePreview" alt="Vista previa de tu firma guardada"></div>
+        <div class="saved-signature-actions">
+          <button id="useSavedSignature" class="button primary" type="button">Usar firma guardada</button>
+          <button id="deleteSavedSignature" class="button danger" type="button">Eliminar firma</button>
+        </div>
+      </section>
+      <p class="muted" id="drawSignatureIntro">Dibuja una firma nueva con el dedo o un lápiz digital.</p>
+      <div class="signature-area"><canvas id="signaturePad" width="800" height="260"></canvas></div>
+      <label class="remember-signature"><input id="rememberSignature" type="checkbox"> <span>Guardar esta firma en este dispositivo para próximos PDFs</span></label>
+      <p class="muted signature-privacy">Si compartes el teléfono con otras personas, no guardes tu firma. Puedes eliminarla cuando quieras.</p>
+      <div class="dialog-buttons between"><button id="clearSignature" class="button subtle" type="button">Borrar dibujo</button><div><button type="button" data-close="signatureDialog" class="button subtle">Cancelar</button><button id="useSignature" type="button" class="button primary">Usar firma nueva</button></div></div>
+      <p class="muted">Cada firma incluirá la fecha, hora y zona horaria del teléfono en el PDF. Se basa en el reloj del dispositivo; no es un sello de tiempo certificado ni una firma digital criptográfica.</p>
+    </div>
+  </dialog>
+
+  <dialog id="fieldsDialog">
+    <div class="dialog-body">
+      <h2>Completar formulario</h2>
+      <p class="muted">Los cambios se incorporan al PDF cuando guardas o compartes.</p>
+      <div id="fieldsBody" class="fields-list"></div>
+      <div class="dialog-buttons"><button id="finishFields" type="button" class="button primary">Listo</button></div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
